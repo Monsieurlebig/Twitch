@@ -1,6 +1,6 @@
-import puppeteer from 'puppeteer';
-import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
+const puppeteer = require('puppeteer');
+const { Hono } = require('hono');
+const { serve } = require('@hono/node-server');
 
 const app = new Hono();
 
