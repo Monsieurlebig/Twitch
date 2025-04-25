@@ -1,14 +1,15 @@
 const { Builder, By, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 
 async function scrapeVideoUrl(startUrl) {
-    // Lance Chrome en mode headless
+    // Création des options Chrome en mode headless
+    const options = new chrome.Options();
+    options.addArguments('--headless', '--disable-gpu', '--no-sandbox');
+
+    // Lance Chrome en mode headless avec les options
     let driver = await new Builder()
         .forBrowser('chrome')
-        .setChromeOptions(
-            // Nécessite chromedriver installé (cf. package.json)
-            require('selenium-webdriver/chrome').Options().headless()
-                .addArguments('--disable-gpu', '--no-sandbox')
-        )
+        .setChromeOptions(options)
         .build();
 
     try {
