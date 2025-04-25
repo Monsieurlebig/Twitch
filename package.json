@@ -9,6 +9,6 @@
   "dependencies": {
     "puppeteer": "^21.3.8",
     "hono": "^4.0.0",
-    "@hono/node-server": "^2.0.0"
+    "@hono/node-server": "^1.7.6"
   }
 }
