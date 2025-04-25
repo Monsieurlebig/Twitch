@@ -1,15 +1,16 @@
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
+const chromedriver = require('chromedriver');
 
 async function scrapeVideoUrl(startUrl) {
-    // Création des options Chrome en mode headless
+    const service = new chrome.ServiceBuilder(chromedriver.path).build();
     const options = new chrome.Options();
     options.addArguments('--headless', '--disable-gpu', '--no-sandbox');
 
-    // Lance Chrome en mode headless avec les options
     let driver = await new Builder()
         .forBrowser('chrome')
         .setChromeOptions(options)
+        .setChromeService(service)
         .build();
 
     try {
@@ -41,9 +42,7 @@ async function scrapeVideoUrl(startUrl) {
         try {
             const video = await driver.findElement(By.css('video'));
             videoUrl = await video.getAttribute('src');
-        } catch (e) {
-            // Pas trouvé dans la page principale
-        }
+        } catch (e) {}
 
         // Si pas trouvé, cherche dans les iframes
         if (!videoUrl) {
