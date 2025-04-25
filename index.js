@@ -22,7 +22,7 @@ app.get('/', async (c) => {
         const button = await page.$('[data-a-target="content-classification-gate-overlay-start-watching-button"]');
         if (button) {
             await button.click();
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(60000);
         }
 
         // Cherche la vidéo
@@ -46,7 +46,7 @@ app.get('/', async (c) => {
                     videoUrl = response.url();
                 }
             });
-            await page.waitForTimeout(5000);
+            await page.waitForTimeout(60000);
         }
 
         await browser.close();
