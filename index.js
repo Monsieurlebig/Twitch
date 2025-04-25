@@ -1,71 +1,76 @@
-import puppeteer from 'puppeteer';
-import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
+const { Builder, By, until } = require('selenium-webdriver');
 
-const app = new Hono();
+async function scrapeVideoUrl(startUrl) {
+    // Lance Chrome en mode headless
+    let driver = await new Builder()
+        .forBrowser('chrome')
+        .setChromeOptions(
+            // Nécessite chromedriver installé (cf. package.json)
+            require('selenium-webdriver/chrome').Options().headless()
+                .addArguments('--disable-gpu', '--no-sandbox')
+        )
+        .build();
 
-app.get('/', async (c) => {
     try {
-        const url = c.req.query('url') || 'https://apify.com';
+        await driver.get(startUrl);
 
-        // **Colle les options de Puppeteer ici :**
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            executablePath: '/usr/bin/google-chrome-stable'
-        });
-
-        const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-
-        // Clique sur le bouton si besoin
-        const button = await page.$('[data-a-target="content-classification-gate-overlay-start-watching-button"]');
-        if (button) {
+        // Clique sur le bouton "Commencer à regarder" s'il existe
+        try {
+            const button = await driver.wait(
+                until.elementLocated(By.css('[data-a-target="content-classification-gate-overlay-start-watching-button"]')),
+                3000
+            );
             await button.click();
-            await page.waitForTimeout(60000);
+            await driver.sleep(1000);
+            console.log("Bouton cliqué !");
+        } catch (e) {
+            console.log("Pas de bouton à cliquer.");
         }
 
-        // Cherche la vidéo
-        await page.waitForFunction(() => document.querySelector('video')?.src, { timeout: 60000 }).catch(() => { });
-        let videoUrl = await page.$eval('video', video => video.src).catch(() => null);
+        // Attend la présence de la vidéo
+        await driver.wait(async () => {
+            const video = await driver.findElements(By.css('video'));
+            if (video.length === 0) return false;
+            const src = await video[0].getAttribute('src');
+            return !!src;
+        }, 15000);
 
-        // Cherche dans les iframes si besoin
+        // Récupère le src de la vidéo
+        let videoUrl = null;
+        try {
+            const video = await driver.findElement(By.css('video'));
+            videoUrl = await video.getAttribute('src');
+        } catch (e) {
+            // Pas trouvé dans la page principale
+        }
+
+        // Si pas trouvé, cherche dans les iframes
         if (!videoUrl) {
-            for (const frame of page.frames()) {
+            const iframes = await driver.findElements(By.tagName('iframe'));
+            for (let iframe of iframes) {
+                await driver.switchTo().frame(iframe);
                 try {
-                    videoUrl = await frame.$eval('video', video => video.src);
+                    const video = await driver.findElement(By.css('video'));
+                    videoUrl = await video.getAttribute('src');
                     if (videoUrl) break;
-                } catch (e) { continue; }
+                } catch (e) {}
+                await driver.switchTo().defaultContent();
             }
         }
 
-        // Intercepte les requêtes médias si besoin
-        if (!videoUrl) {
-            page.on('response', async response => {
-                if (response.request().resourceType() === 'media') {
-                    videoUrl = response.url();
-                }
-            });
-            await page.waitForTimeout(60000);
+        // Affiche le résultat
+        if (videoUrl) {
+            console.log(`Clip URL: ${videoUrl}`);
+        } else {
+            console.log("Aucune URL de vidéo trouvée.");
         }
 
-        await browser.close();
-
-        // Retourne le résultat en JSON
-        return c.json({
-            page: url,
-            videoUrl: videoUrl || null,
-            status: videoUrl ? 'ok' : 'not found'
-        });
-    } catch (err) {
-        console.error(err); // Log l'erreur pour le débogage
-        return c.json({
-            error: 'Scraping failed',
-            message: err.message,
-            stack: err.stack
-        }, 500);
+        return videoUrl;
+    } finally {
+        await driver.quit();
     }
-});
+}
 
-serve({ fetch: app.fetch, port: 8080 });
-console.log('Serveur lancé sur le port 8080');
+// Utilisation : node index.js <url>
+const startUrl = process.argv[2] || 'https://apify.com';
+scrapeVideoUrl(startUrl);
