@@ -7,10 +7,14 @@ const app = new Hono();
 app.get('/', async (c) => {
     try {
         const url = c.req.query('url') || 'https://apify.com';
+
+        // **Colle les options de Puppeteer ici :**
         const browser = await puppeteer.launch({
             headless: true,
-            args: ['--disable-gpu', '--no-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath: '/usr/bin/google-chrome-stable'
         });
+
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
