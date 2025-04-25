@@ -1,0 +1,14 @@
+{
+  "name": "scraping-leapcell",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "puppeteer": "^21.3.8",
+    "hono": "^4.0.0",
+    "@hono/node-server": "^2.0.0"
+  }
+}
