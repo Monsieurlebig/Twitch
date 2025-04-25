@@ -26,7 +26,7 @@ app.get('/', async (c) => {
         }
 
         // Cherche la vidéo
-        await page.waitForFunction(() => document.querySelector('video')?.src, { timeout: 15000 }).catch(() => { });
+        await page.waitForFunction(() => document.querySelector('video')?.src, { timeout: 60000 }).catch(() => { });
         let videoUrl = await page.$eval('video', video => video.src).catch(() => null);
 
         // Cherche dans les iframes si besoin
