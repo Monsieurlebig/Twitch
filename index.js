@@ -3,7 +3,7 @@ const chrome = require('selenium-webdriver/chrome');
 const chromedriver = require('chromedriver');
 
 async function scrapeVideoUrl(startUrl) {
-    const service = new chrome.ServiceBuilder(chromedriver.path).build();
+    const service = new chrome.ServiceBuilder(chromedriver.path);
     const options = new chrome.Options();
     options.addArguments('--headless', '--disable-gpu', '--no-sandbox');
 
